@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/_pthread/_pthread_attr_t.h>
 
-#define NUM_THREADS 11
+#define NUM_THREADS 27
 #define VAL_SUM 45
 #define N 9
 
@@ -28,17 +28,23 @@ typedef struct {
 void *val_row_worker(void *param) {
   int sum = 0;
   int row = ((params *)param)->row;
+  // printf("row: %d\n", row);
 
   for (int j = 0; j < N; j++) {
     int val = board[row][j];
-    if (val > 9 || val < 1)
+    if (val > 9 || val < 1) {
+      free(param);
       pthread_exit(0);
+    }
     sum += val;
   }
 
   /* If valid sum set the bit to one. */
   if (sum == VAL_SUM)
     bit_val[row] = 1;
+  printf("val_row_worker: row: %d -> sum = %d: exiting succesfully\n", row,
+         sum);
+  free(param);
   pthread_exit(0);
 }
 
@@ -48,14 +54,18 @@ void *val_col_worker(void *param) {
 
   for (int i = 0; i < N; i++) {
     int val = board[i][col];
-    if (val > 9 || val < 1)
+    if (val > 9 || val < 1) {
+      free(param);
       pthread_exit(0);
+    }
     sum += val;
   }
 
   /* If valid sum set the bit to one. */
   if (sum == VAL_SUM)
     bit_val[col + 9] = 1;
+  printf("val_col_worker: exiting succesfully\n");
+  free(param);
   pthread_exit(0);
 }
 void *val_square_worker(void *param) {
@@ -68,14 +78,18 @@ void *val_square_worker(void *param) {
   for (int i = row; i < max_i; i++)
     for (int j = col; j < max_j; j++) {
       int val = board[i][j];
-      if (val > 9 || val < 1)
+      if (val > 9 || val < 1) {
+        free(param);
         pthread_exit(0);
+      }
       sum += val;
     }
 
   /* If valid sum set the bit to one. */
   if (sum == VAL_SUM)
     bit_val[row + (col / 3) + 18] = 1;
+  printf("val_square_worker: exiting succesfully\n");
+  free(param);
   pthread_exit(0);
 }
 
@@ -122,62 +136,92 @@ int main(int argc, char **argv) {
 
   /* Init row threads. */
   for (int i = 0; i < N; i++) {
-    params p = {i, 0};
-    pthread_create(&workers[i], &attr, val_col_worker, &p);
+    params *p = malloc(sizeof(params));
+    p->row = i;
+    p->col = 0;
+    pthread_create(&workers[i], &attr, val_row_worker, p);
   }
 
   /* Init col threads. */
   for (int j = 0; j < N; j++) {
-    params p = {0, j};
-    pthread_create(&workers[j + 9], &attr, val_col_worker, &p);
+    params *p = malloc(sizeof(params));
+    p->row = 0;
+    p->col = j;
+    pthread_create(&workers[j + 9], &attr, val_col_worker, p);
   }
 
   /* TODO: Init square threads. */
   /* 0x0 */
-  params p = {0, 0};
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  params *pptr = malloc(sizeof(params));
+  pptr->row = 0;
+  pptr->col = 0;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
+
   /* 0x3 */
-  p.col = 3;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 0;
+  pptr->col = 3;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   /* 0x6 */
-  p.col = 6;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 0;
+  pptr->col = 6;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   /* 3x0 */
-  p.row = 3;
-  p.col = 0;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 3;
+  pptr->col = 0;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   /* 3x3 */
-  p.row = 3;
-  p.col = 3;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 3;
+  pptr->col = 3;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   /* 3x6 */
-  p.row = 3;
-  p.col = 6;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 3;
+  pptr->col = 6;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   /* 6x0 */
-  p.row = 6;
-  p.col = 0;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 6;
+  pptr->col = 0;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   /* 6x3 */
-  p.row = 6;
-  p.col = 3;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 6;
+  pptr->col = 3;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   /* 6x6 */
-  p.row = 6;
-  p.col = 6;
-  pthread_create(&workers[p.row + (p.col / 3)], &attr, val_square_worker, &p);
+  pptr = malloc(sizeof(params));
+  pptr->row = 6;
+  pptr->col = 6;
+  pthread_create(&workers[pptr->row + (pptr->col / 3)], &attr,
+                 val_square_worker, pptr);
 
   for (int i = 0; i < NUM_THREADS; i++)
     pthread_join(workers[i], NULL);
 
-  printf("Is valid board? %d\n", is_valid_board());
+  printf("\n\n");
+  for (int i = 0; i < NUM_THREADS; i++)
+    printf("%d: %d\n", i, bit_val[i]);
+
+  printf("\n\nIs valid board? %d\n", is_valid_board());
 
   fclose(fp);
   // free(line);
