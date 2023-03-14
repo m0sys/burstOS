@@ -1,0 +1,10 @@
+Valsudoku - A multithreaded sudoku validator
+============================================
+
+How to run?
+-----------
+
+```
+make main 
+./main data/validboard.txt
+```
