@@ -1,7 +1,6 @@
 #include "worker.h"
 
 #include <pthread.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 /* The global extern board variables shared by all threads. */
@@ -11,7 +10,6 @@ extern int bit_val[NUM_THREADS];
 void *val_row_worker(void *param) {
   int sum = 0;
   int row = ((params *)param)->row;
-  // printf("row: %d\n", row);
 
   for (int j = 0; j < N; j++) {
     int val = board[row][j];
@@ -25,8 +23,6 @@ void *val_row_worker(void *param) {
   /* If valid sum set the bit to one. */
   if (sum == VAL_SUM)
     bit_val[row] = 1;
-  printf("val_row_worker: row: %d -> sum = %d: exiting succesfully\n", row,
-         sum);
   free(param);
   pthread_exit(0);
 }
@@ -47,7 +43,6 @@ void *val_col_worker(void *param) {
   /* If valid sum set the bit to one. */
   if (sum == VAL_SUM)
     bit_val[col + 9] = 1;
-  printf("val_col_worker: exiting succesfully\n");
   free(param);
   pthread_exit(0);
 }
@@ -72,7 +67,6 @@ void *val_square_worker(void *param) {
   /* If valid sum set the bit to one. */
   if (sum == VAL_SUM)
     bit_val[row + (col / 3) + 18] = 1;
-  printf("val_square_worker: exiting succesfully\n");
   free(param);
   pthread_exit(0);
 }

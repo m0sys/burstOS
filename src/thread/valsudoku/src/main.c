@@ -23,8 +23,6 @@ int main(int argc, char **argv) {
   int row = 0;
   /* Load board from file. */
   while ((read = getline(&line, &len, fp)) != -1) {
-    printf("Len line: %zu\n", read);
-    printf("line: %s\n", line);
     int scnt = 0;
     for (int j = 0; j < read; j++) {
       if (line[j] == ' ') {
@@ -38,7 +36,7 @@ int main(int argc, char **argv) {
 
   print_board();
 
-  /* TODO: Unleash the threads. */
+  /* Unleash the threads. */
   pthread_t workers[NUM_THREADS];
   pthread_attr_t attr;
   pthread_attr_init(&attr);
@@ -126,12 +124,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < NUM_THREADS; i++)
     pthread_join(workers[i], NULL);
 
-  printf("\n\n");
-  for (int i = 0; i < NUM_THREADS; i++)
-    printf("%d: %d\n", i, bit_val[i]);
-
   printf("\n\nIs valid board? %d\n", is_valid_board());
 
   fclose(fp);
-  // free(line);
 }
