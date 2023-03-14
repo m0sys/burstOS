@@ -23,13 +23,10 @@ int main(void) {
 
   /* Init sorting threads. */
   int mid = ARR_SZ / 2;
-
   int start1 = 0;
   int start2 = mid;
   int end1 = mid;
   int end2 = ARR_SZ;
-  printf("start1: %d, end1: %d\nstart2: %d, end2: %d\nmid: %d\n", start1, end1,
-         start2, end2, mid);
 
   /* lhs sorter */
   sort_params *sp = malloc(sizeof(sort_params));
@@ -42,7 +39,7 @@ int main(void) {
   sp = malloc(sizeof(sort_params));
   sp->start = start2;
   sp->end = end2;
-  sp->sort_func = insertion_sort;
+  sp->sort_func = selection_sort;
   pthread_create(&workers[1], &attr, sort_worker, sp);
 
   /* Init merging thread. */

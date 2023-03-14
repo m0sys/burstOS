@@ -12,8 +12,6 @@ void *sort_worker(void *params) {
   p->sort_func(arr, p->start, p->end);
 
   /* Cleanly exit the worker. */
-  printf("sort_worker: start: %d => exiting ...\n", p->start);
-  print_arr(arr, p->start, p->end);
   free(params);
   pthread_exit(0);
 }
@@ -26,7 +24,6 @@ void *merge_worker(void *params) {
   pthread_join(p->tid1, NULL);
   pthread_join(p->tid2, NULL);
   printf("merge_worker: done waiting for sorting threads!\n");
-  print_arr(arr, p->start1, p->end2);
 
   /* Create aux array. */
   int *aux = malloc(sizeof(int) * p->sz);
@@ -34,8 +31,6 @@ void *merge_worker(void *params) {
   /* Copy the half sorted array into the aux array. */
   for (int i = 0; i < p->sz; i++)
     aux[i] = arr[i];
-
-  print_arr(aux, p->start1, p->end2);
 
   for (int i = 0; i < p->sz; i++) {
     if (p->start1 >= p->end1) /* lhs fully merged */
