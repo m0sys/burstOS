@@ -1,0 +1,10 @@
+TSort - A 3 threaded pluggable sorting application
+==================================================
+
+How to run?
+-----------
+
+```
+make main
+./main data/arr1.txt
+```
