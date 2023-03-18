@@ -1,4 +1,5 @@
-// function prototypes
+#pragma once
+
 void execute(void (*somefunction)(void *p), void *p);
 int pool_submit(void (*somefunction)(void *p), void *p);
 void *worker(void *param);
