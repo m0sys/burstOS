@@ -7,6 +7,7 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/semaphore.h>
 
 #define QUEUE_SIZE 10
 #define NUM_THREADS 3
@@ -55,12 +56,34 @@ int enqueue(task t) {
 }
 
 /* Remove a task from the queue. */
-task dequeue() { return worktodo[0]; }
+task dequeue() {
+  /* FIFO. */
+  task t = worktodo[0];
+
+  /* LSHF queue by 1. */
+  for (int i = 1; i < nxt_pos; i++)
+    worktodo[i - 1] = worktodo[i];
+  nxt_pos--;
+
+  return t;
+}
 
 /* The worker thread in the thread pool. */
 void *worker(void *param) {
-  /* Execute the task only if work is available. */
-  execute(worktodo[0].function, worktodo[0].data);
+  /* Wait till work is available. */
+  sem_wait(&full_queue);
+
+  /* Wait for lock before accessing queue. */
+  pthread_mutex_lock(&mutex);
+
+  /* Critical section. */
+  task tsk = dequeue();
+
+  /* Release the lock. */
+  pthread_mutex_unlock(&mutex);
+
+  /* Execute the task now that work is available. */
+  execute(tsk.function, tsk.data);
 
   pthread_exit(0);
 }
@@ -84,21 +107,23 @@ int pool_submit(void (*somefunction)(void *p), void *p) {
 
   /* Release the lock. */
   pthread_mutex_unlock(&mutex);
+  if (err == 0)
+    sem_post(&full_queue);
 
   return err;
 }
 
 /* Initialize the thread pool. */
 void pool_init(void) {
-  /* Create all threads. */
-  for (int i = 0; i < NUM_THREADS; i++)
-    pthread_create(&bees[i], NULL, worker, NULL);
-
   /* Init semaphore to keep track of the num of tasks in the queue. */
   sem_init(&full_queue, 0, 0); /* share only amoung threads in same proc */
 
   /* Init the mutex to lock access to queue. */
   pthread_mutex_init(&mutex, NULL);
+
+  /* Create all threads. */
+  for (int i = 0; i < NUM_THREADS; i++)
+    pthread_create(&bees[i], NULL, worker, NULL);
 }
 
 /* Shutdown the thread pool */
