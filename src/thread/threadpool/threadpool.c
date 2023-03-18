@@ -35,12 +35,24 @@ task worktodo[QUEUE_SIZE] = {0};
 /* The worker bee. */
 pthread_t bees[NUM_THREADS];
 
+/* Next queue insert pos. */
+int nxt_pos = 0;
+
 /*
  * Insert a task into the queue.
  *
  * Returns 0 if successful or 1 otherwise.
  */
-int enqueue(task t) { return 0; }
+int enqueue(task t) {
+  if (nxt_pos == QUEUE_SIZE)
+    return 1;
+
+  worktodo[nxt_pos].function = t.function;
+  worktodo[nxt_pos].data = t.data;
+  nxt_pos += 1;
+
+  return 0;
+}
 
 /* Remove a task from the queue. */
 task dequeue() { return worktodo[0]; }
@@ -62,10 +74,18 @@ void execute(void (*somefunction)(void *p), void *p) { (*somefunction)(p); }
  * Submits work to the pool.
  */
 int pool_submit(void (*somefunction)(void *p), void *p) {
-  worktodo[0].function = somefunction;
-  worktodo[0].data = p;
+  task tsk = {somefunction, p};
 
-  return 0;
+  /* Wait for the lock before accessing queue. */
+  pthread_mutex_lock(&mutex);
+
+  /* Critical section. */
+  int err = enqueue(tsk);
+
+  /* Release the lock. */
+  pthread_mutex_unlock(&mutex);
+
+  return err;
 }
 
 /* Initialize the thread pool. */
