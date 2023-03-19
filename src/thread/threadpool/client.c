@@ -24,18 +24,24 @@ int main(void) {
   struct data work;
   work.a = 5;
   work.b = 10;
+  struct data work2;
+  work2.a = 2;
+  work2.b = 3;
+  struct data work3;
+  work3.a = 6;
+  work3.b = 4;
 
   /* Initialize the thread pool. */
   pool_init();
 
   /* submit the work to the pool. */
-  int a = 2;
-  int b = 3;
-  int c = a + b;
+  // int a = 2;
+  // int b = 3;
+  // int c = a + b;
   // printf("c = %d\n", c);
-  long int sum = 0;
-  for (int i = 1000000; i > 0; i--)
-    sum++;
+  // long int sum = 0;
+  // for (int i = 1000000; i > 0; i--)
+  //   sum++;
   /* NOTE: with enough computation between pool_init & pool_submit a seg fault
    * will occur.
    *
@@ -46,6 +52,9 @@ int main(void) {
    * in the worker!
    */
   pool_submit(&add, &work);
+
+  pool_submit(&add, &work2);
+  pool_submit(&add, &work3);
 
   // may be helpful
   // sleep(3);
