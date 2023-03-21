@@ -2,41 +2,44 @@
  * Example client program that uses thread pool.
  */
 
+#include "threadpool.h"
 #include <stdio.h>
 #include <unistd.h>
-#include "threadpool.h"
 
-struct data
-{
-    int a;
-    int b;
+#define WORK_LOAD 10000
+
+struct data {
+  int a;
+  int b;
 };
 
-void add(void *param)
-{
-    struct data *temp;
-    temp = (struct data*)param;
+void add(void *param) {
+  struct data *temp;
+  temp = (struct data *)param;
 
-    printf("I add two values %d and %d result = %d\n",temp->a, temp->b, temp->a + temp->b);
+  printf("I add two values %d and %d result = %d\n", temp->a, temp->b,
+         temp->a + temp->b);
 }
 
-int main(void)
-{
-    // create some work to do
-    struct data work;
-    work.a = 5;
-    work.b = 10;
+int main(void) {
+  /* Create some work to do. */
+  struct data works[WORK_LOAD];
 
-    // initialize the thread pool
-    pool_init();
+  for (int i = 1; i <= WORK_LOAD; i++) {
+    works[i - 1].a = i - 1;
+    works[i - 1].b = i;
+  }
 
-    // submit the work to the queue
-    pool_submit(&add,&work);
+  /* Initialize the thread pool. */
+  pool_init();
 
-    // may be helpful 
-    //sleep(3);
+  for (int i = 0; i < WORK_LOAD; i++)
+    pool_submit(&add, &works[i]);
 
-    pool_shutdown();
+  /* may be helpful */
+  sleep(3);
 
-    return 0;
+  pool_shutdown();
+
+  return 0;
 }
