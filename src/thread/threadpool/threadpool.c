@@ -11,8 +11,9 @@
 #include <sys/fcntl.h>
 #include <sys/semaphore.h>
 #include <sys/stat.h>
+#include <time.h>
 
-#define QUEUE_SIZE 10
+#define QUEUE_SIZE 100
 #define NUM_THREADS 3
 
 #define TRUE 1
@@ -26,6 +27,9 @@ typedef struct {
 /**
  * All the global mutexes/semaphors shared between threads.
  */
+
+/* Global timeout for sem_wait. */
+struct timespec ts;
 
 /* Keep track of how full the queue is. */
 sem_t *full_queue;
@@ -73,27 +77,29 @@ task dequeue() {
 
 /* The worker thread in the thread pool. */
 void *worker(void *param) {
-  /* Wait till work is available. */
-  // printf("worker: waiting for full_queue sem(%d) ...\n", *full_queue);
-  int err = sem_wait(full_queue);
-  printf("worker: sem_wait(err) -> %d\n", err);
 
-  /* Wait for lock before accessing queue. */
-  printf("worker: waiting for mutex ...\n");
-  err = pthread_mutex_lock(&mutex);
-  printf("worker: mutex_lock(err) -> %d\n", err);
+  while (1) {
+    pthread_testcancel();
 
-  /* Critical section. */
-  task tsk = dequeue();
+    /* Wait till work is available. */
+    int err = sem_wait(full_queue);
+    printf("worker: sem_wait(err) -> %d\n", err);
 
-  /* Release the lock. */
-  pthread_mutex_unlock(&mutex);
-  printf("worker: mutex_unlock(err) -> %d\n", err);
+    /* Wait for lock before accessing queue. */
+    printf("worker: waiting for mutex ...\n");
+    err = pthread_mutex_lock(&mutex);
+    printf("worker: mutex_lock(err) -> %d\n", err);
 
-  /* Execute the task now that work is available. */
-  execute(tsk.function, tsk.data);
+    /* Critical section. */
+    task tsk = dequeue();
 
-  pthread_exit(0);
+    /* Release the lock. */
+    pthread_mutex_unlock(&mutex);
+    printf("worker: mutex_unlock(err) -> %d\n", err);
+
+    /* Execute the task now that work is available. */
+    execute(tsk.function, tsk.data);
+  }
 }
 
 /**
@@ -131,6 +137,10 @@ int pool_submit(void (*somefunction)(void *p), void *p) {
 
 /* Initialize the thread pool. */
 void pool_init(void) {
+  /* Init the timer to 5 sec max wait. */
+  clock_gettime(CLOCK_REALTIME, &ts);
+  ts.tv_sec += 5;
+
   /* Init semaphore to keep track of the num of tasks in the queue. */
   full_queue = sem_open("FULL_QUEUE_SEM", O_CREAT, ALLPERMS, 0);
 
@@ -145,10 +155,15 @@ void pool_init(void) {
 
 /* Shutdown the thread pool */
 void pool_shutdown(void) {
+  /* Signal all threads to cancel themselves. */
+  for (int i = 0; i < NUM_THREADS; i++)
+    pthread_cancel(bees[i]);
+
+  /* Wait for all threads to exit. */
   for (int i = 0; i < NUM_THREADS; i++)
     pthread_join(bees[i], NULL);
 
-  /* Clean up. */
+  /* Clean up sem. */
   int err = sem_close(full_queue);
   printf("pool_shutdown: sem_close(err) -> %d\n", err);
   err = sem_unlink("FULL_QUEUE_SEM");

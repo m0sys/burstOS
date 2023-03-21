@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define WORK_LOAD 100
+
 struct data {
   int a;
   int b;
@@ -21,15 +23,12 @@ void add(void *param) {
 
 int main(void) {
   /* Create some work to do. */
-  struct data work;
-  work.a = 5;
-  work.b = 10;
-  struct data work2;
-  work2.a = 2;
-  work2.b = 3;
-  struct data work3;
-  work3.a = 6;
-  work3.b = 4;
+  struct data works[WORK_LOAD];
+
+  for (int i = 1; i <= WORK_LOAD; i++) {
+    works[i - 1].a = i - 1;
+    works[i - 1].b = i;
+  }
 
   /* Initialize the thread pool. */
   pool_init();
@@ -51,13 +50,12 @@ int main(void) {
    * NOTE: The issue will be solved once wait is called before calling execute
    * in the worker!
    */
-  pool_submit(&add, &work);
 
-  pool_submit(&add, &work2);
-  pool_submit(&add, &work3);
+  for (int i = 0; i < WORK_LOAD; i++)
+    pool_submit(&add, &works[i]);
 
   // may be helpful
-  // sleep(3);
+  sleep(3);
 
   pool_shutdown();
 
