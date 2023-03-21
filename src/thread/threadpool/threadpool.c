@@ -12,6 +12,7 @@
 #include <sys/semaphore.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #define QUEUE_SIZE 100
 #define NUM_THREADS 3
@@ -54,6 +55,7 @@ int nxt_pos = 0;
 int enqueue(task t) {
   if (nxt_pos == QUEUE_SIZE)
     return 1;
+  printf("enqueue: nxt_pos=%d\n", nxt_pos);
 
   worktodo[nxt_pos].function = t.function;
   worktodo[nxt_pos].data = t.data;
@@ -77,7 +79,6 @@ task dequeue() {
 
 /* The worker thread in the thread pool. */
 void *worker(void *param) {
-
   while (1) {
     pthread_testcancel();
 
@@ -121,6 +122,13 @@ int pool_submit(void (*somefunction)(void *p), void *p) {
   /* Critical section. */
   err = enqueue(tsk);
   printf("pool_submit: enqueue(err) -> %d\n", err);
+
+  if (err == 1) {
+    printf("\n\npool_submit: queue is full!!!\n\n");
+    err = pthread_mutex_unlock(&mutex);
+    printf("pool_submit: mutex_unlock(err) -> %d\n", err);
+    return 1;
+  }
 
   /* Release the lock. */
   err = pthread_mutex_unlock(&mutex);

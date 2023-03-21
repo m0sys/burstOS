@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define WORK_LOAD 100
+#define WORK_LOAD 1000
 
 struct data {
   int a;
@@ -33,23 +33,14 @@ int main(void) {
   /* Initialize the thread pool. */
   pool_init();
 
-  /* submit the work to the pool. */
-  // int a = 2;
-  // int b = 3;
-  // int c = a + b;
-  // printf("c = %d\n", c);
-  // long int sum = 0;
-  // for (int i = 1000000; i > 0; i--)
-  //   sum++;
-  /* NOTE: with enough computation between pool_init & pool_submit a seg fault
-   * will occur.
-   *
-   * Perhaps this is because printf results in an interrupt? No its a matter
-   * of how long till init and submit.
-   *
-   * NOTE: The issue will be solved once wait is called before calling execute
-   * in the worker!
-   */
+  /* Some random computation. */
+  int a = 2;
+  int b = 3;
+  int c = a + b;
+  printf("c = %d\n", c);
+  long int sum = 0;
+  for (int i = 1000000; i > 0; i--)
+    sum++;
 
   for (int i = 0; i < WORK_LOAD; i++)
     pool_submit(&add, &works[i]);
