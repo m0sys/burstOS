@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define WORK_LOAD 1000
+#define WORK_LOAD 10000
 
 struct data {
   int a;
@@ -33,19 +33,10 @@ int main(void) {
   /* Initialize the thread pool. */
   pool_init();
 
-  /* Some random computation. */
-  int a = 2;
-  int b = 3;
-  int c = a + b;
-  printf("c = %d\n", c);
-  long int sum = 0;
-  for (int i = 1000000; i > 0; i--)
-    sum++;
-
   for (int i = 0; i < WORK_LOAD; i++)
     pool_submit(&add, &works[i]);
 
-  // may be helpful
+  /* may be helpful */
   sleep(3);
 
   pool_shutdown();
