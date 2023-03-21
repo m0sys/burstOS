@@ -25,6 +25,17 @@ typedef struct {
   void *data;
 } task;
 
+/* Queue node. */
+struct node {
+  struct node *nxt;
+  task task;
+};
+
+typedef struct node node;
+
+node *head = NULL;
+node *last = NULL;
+
 /**
  * All the global mutexes/semaphors shared between threads.
  */
@@ -53,13 +64,27 @@ int nxt_pos = 0;
  * Returns 0 if successful or 1 otherwise.
  */
 int enqueue(task t) {
-  if (nxt_pos == QUEUE_SIZE)
-    return 1;
-  printf("enqueue: nxt_pos=%d\n", nxt_pos);
+  /* Create new node. */
+  node *new_node = malloc(sizeof(node));
+  new_node->task.data = t.data;
+  new_node->task.function = t.function;
 
-  worktodo[nxt_pos].function = t.function;
-  worktodo[nxt_pos].data = t.data;
-  nxt_pos += 1;
+  /* Append to end of queue. */
+  if (head == NULL) {
+    head = new_node;
+    last = new_node;
+  } else {
+    last->nxt = new_node;
+    last = last->nxt;
+  }
+
+  // if (nxt_pos == QUEUE_SIZE)
+  //   return 1;
+  // printf("enqueue: nxt_pos=%d\n", nxt_pos);
+
+  // worktodo[nxt_pos].function = t.function;
+  // worktodo[nxt_pos].data = t.data;
+  // nxt_pos += 1;
 
   return 0;
 }
@@ -67,14 +92,23 @@ int enqueue(task t) {
 /* Remove a task from the queue. */
 task dequeue() {
   /* FIFO. */
-  task t = worktodo[0];
+  node *old_head = head;
+  head = head->nxt;
+  if (last == old_head)
+    last = head;
+
+  task t = old_head->task; /* copy task */
+  free(old_head);
+  return t; /* ret copied task */
+
+  // task t = worktodo[0];
 
   /* LSHF queue by 1. */
-  for (int i = 1; i < nxt_pos; i++)
-    worktodo[i - 1] = worktodo[i];
-  nxt_pos--;
+  // for (int i = 1; i < nxt_pos; i++)
+  //   worktodo[i - 1] = worktodo[i];
+  // nxt_pos--;
 
-  return t;
+  // return t;
 }
 
 /* The worker thread in the thread pool. */
