@@ -9,7 +9,7 @@ clean:
 	rm -rf main
 
 main: main.o 
-	$(CC) $(CFLAGS) -o main main.o  $(PHTHREADS)
+	$(CC) $(CFLAGS) -o main main.o $(PHTHREADS)
 
 main.o: src/main.c
 	$(CC) $(CFLAGS) -c src/main.c
